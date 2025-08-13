@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+/* You can add this at the end of your index.css file */
+
+.food-pulsate {
+  animation: pulsate 1.5s ease-in-out infinite alternate;
+  box-shadow: 0 0 10px 5px #fca5a5, 0 0 20px 10px #f87171, 0 0 30px 15px #dc2626;
+  border-radius: 50%;
+}
+
+.food-body {
+  background-color: #ef4444; /* A brighter, more solid red */
+  border: 2px solid #b91c1c; /* A dark red border for depth */
+}
+
+.food-highlight {
+  background-color: rgba(255, 255, 255, 0.5); /* A subtle white highlight */
+  filter: blur(1px); /* Blurring the highlight to make it softer */
+}
+
+@keyframes pulsate {
+  from {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}

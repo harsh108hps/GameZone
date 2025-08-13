@@ -19,7 +19,7 @@ export default function GameBoard() {
   function getRandomFood() {
     return {
       x: Math.floor(Math.random() * boardSize),
-      y: Math.floor(Math.random() * boardSize)
+      y: Math.floor(Math.random() * boardSize),
     };
   }
 
@@ -57,7 +57,7 @@ export default function GameBoard() {
     // Eat food
     if (head.x === food.x && head.y === food.y) {
       setFood(getRandomFood());
-      setScore(prev => prev + 1);
+      setScore((prev) => prev + 1);
     } else {
       newSnake.pop();
     }
@@ -108,10 +108,10 @@ export default function GameBoard() {
         className="relative border-4 border-gray-700 bg-black mt-4"
         style={{
           width: `${boardSize * gridSize}px`,
-          height: `${boardSize * gridSize}px`
+          height: `${boardSize * gridSize}px`,
         }}
       >
-        <Snake snakeDots={snake} />
+        <Snake snakeDots={snake} direction={direction} />
         <Food position={food} />
       </div>
 
