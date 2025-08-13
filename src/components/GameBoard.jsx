@@ -58,6 +58,13 @@ export default function GameBoard() {
     if (head.x === food.x && head.y === food.y) {
       setFood(getRandomFood());
       setScore((prev) => prev + 1);
+      setSpeed((prevSpeed) => {
+        if (prevSpeed > 50) {
+          // Keep a minimum speed to prevent it from getting too fast
+          return prevSpeed - 5;
+        }
+        return prevSpeed;
+      });
     } else {
       newSnake.pop();
     }
@@ -93,19 +100,21 @@ export default function GameBoard() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center mt-10">
-      <div className="flex items-center justify-between w-full max-w-md px-4">
-        <h2 className="text-lg font-bold">Score: {score}</h2>
+    <div className="flex flex-col items-center justify-center  bg-gray-950 text-white mt-4 rounded-lg">
+      <div className="flex items-center justify-between w-full  px-4 mb-8 mt-4">
+        <h2 className="text-2xl font-bold font-mono neon-text">
+          Score: {score}
+        </h2>
         <button
           onClick={startNewGame}
-          className="bg-blue-500 hover:bg-blue-600 px-4 py-1 rounded text-white"
+          className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg text-white font-mono uppercase transition-all duration-300 transform hover:scale-105 shadow-lg active:scale-95"
         >
           {gameOver || speed === null ? "Start" : "Restart"}
         </button>
       </div>
 
       <div
-        className="relative border-4 border-gray-700 bg-black mt-4"
+        className="relative board-theme"
         style={{
           width: `${boardSize * gridSize}px`,
           height: `${boardSize * gridSize}px`,
@@ -116,7 +125,9 @@ export default function GameBoard() {
       </div>
 
       {gameOver && (
-        <div className="mt-4 text-red-500 text-xl font-bold">Game Over!</div>
+        <div className="mt-4 text-red-500 text-4xl font-bold neon-text-red">
+          Game Over!
+        </div>
       )}
     </div>
   );
