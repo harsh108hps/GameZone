@@ -80,3 +80,100 @@ body {
     opacity: 1;
   }
 }
+
+/* --- All your existing CSS here, including .board-theme --- */
+
+/* Base style for all themes */
+.board-theme {
+  border: 4px solid #4a044e; /* Default border color */
+  border-radius: 10px;
+  box-shadow: 0 0 25px 5px rgba(100, 21, 255, 0.5),
+    0 0 40px 10px rgba(139, 92, 246, 0.3);
+  transition: all 0.5s ease-in-out;
+}
+
+/* Default Theme (unchanged) */
+.board-theme-default {
+  background: radial-gradient(circle, #1a1a2e 0%, #000 100%);
+}
+
+/* Garden Theme 🌳 */
+.board-theme-garden {
+  background-color: #38a169; /* a rich green */
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.1) 2px,
+    transparent 2px,
+    transparent 10px
+  );
+  box-shadow: 0 0 25px 5px rgba(56, 161, 105, 0.5),
+    0 0 40px 10px rgba(56, 161, 105, 0.3);
+}
+
+/* Road Theme 🛣️ */
+.board-theme-road {
+  background-color: #2d3748; /* dark gray */
+  background-image: linear-gradient(
+      to right,
+      transparent 45%,
+      #f7fafc 45%,
+      #f7fafc 55%,
+      transparent 55%
+    ),
+    linear-gradient(#4a5568 1px, transparent 1px);
+  background-size: 100% 20px, 100% 20px;
+  box-shadow: 0 0 25px 5px rgba(45, 55, 72, 0.5),
+    0 0 40px 10px rgba(45, 55, 72, 0.3);
+}
+
+/* Space Theme 🚀 */
+.board-theme-space {
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+  box-shadow: 0 0 25px 5px rgba(255, 255, 255, 0.2),
+    0 0 40px 10px rgba(255, 255, 255, 0.1);
+  background-image: radial-gradient(
+      2px 2px at 20px 30px,
+      #eee,
+      rgba(255, 255, 255, 0)
+    ),
+    radial-gradient(2px 2px at 40px 70px, #fff, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 50px 160px, #ddd, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 90px 40px, #fff, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 130px 50px, #fff, rgba(255, 255, 255, 0));
+  background-size: 150px 150px;
+}
+
+/* Cyberpunk Theme 🤖 */
+.board-theme-cyberpunk {
+  background-color: #0b0c10;
+  background-image: linear-gradient(
+      0deg,
+      transparent 24%,
+      rgba(32, 222, 255, 0.1) 25%,
+      rgba(32, 222, 255, 0.1) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(32, 222, 255, 0.1) 75%,
+      rgba(32, 222, 255, 0.1) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      rgba(32, 222, 255, 0.1) 25%,
+      rgba(32, 222, 255, 0.1) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(32, 222, 255, 0.1) 75%,
+      rgba(32, 222, 255, 0.1) 76%,
+      transparent 77%,
+      transparent
+    );
+  background-size: 50px 50px;
+  box-shadow: 0 0 25px 5px rgba(32, 222, 255, 0.5),
+    0 0 40px 10px rgba(255, 0, 255, 0.3);
+  border-color: #20deff;
+}
+
+/* You will also want to adjust the snake and food colors for each theme to ensure visibility. */

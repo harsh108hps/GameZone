@@ -3,6 +3,15 @@ import Snake from "./Snake";
 import Food from "./Food";
 import { useInterval } from "../hooks/useInterval";
 
+// We'll define the themes here for simplicity.
+const themes = {
+  default: "board-theme-default",
+  garden: "board-theme-garden",
+  road: "board-theme-road",
+  space: "board-theme-space",
+  cyberpunk: "board-theme-cyberpunk",
+};
+
 export default function GameBoard() {
   const boardSize = 20;
   const gridSize = 20;
@@ -17,6 +26,8 @@ export default function GameBoard() {
   const [score, setScore] = useState(0);
 
   const [selectedColor, setSelectedColor] = useState("#a3e635");
+  // New state for the theme
+  const [currentTheme, setCurrentTheme] = useState("default");
 
   function getRandomFood() {
     return {
@@ -27,14 +38,13 @@ export default function GameBoard() {
 
   function moveSnake() {
     const newSnake = [...snake];
-    const head = { ...newSnake[0] }; // head at index 0
+    const head = { ...newSnake[0] };
 
     if (direction === "UP") head.y -= 1;
     if (direction === "DOWN") head.y += 1;
     if (direction === "LEFT") head.x -= 1;
     if (direction === "RIGHT") head.x += 1;
 
-    // Wall collision
     if (
       head.x < 0 ||
       head.y < 0 ||
@@ -45,10 +55,8 @@ export default function GameBoard() {
       return;
     }
 
-    // Add new head
     newSnake.unshift(head);
 
-    // Self collision check (head vs rest of body)
     for (let i = 1; i < newSnake.length; i++) {
       if (newSnake[i].x === head.x && newSnake[i].y === head.y) {
         endGame();
@@ -56,13 +64,11 @@ export default function GameBoard() {
       }
     }
 
-    // Eat food
     if (head.x === food.x && head.y === food.y) {
       setFood(getRandomFood());
       setScore((prev) => prev + 1);
       setSpeed((prevSpeed) => {
         if (prevSpeed > 50) {
-          // Keep a minimum speed to prevent it from getting too fast
           return prevSpeed - 5;
         }
         return prevSpeed;
@@ -102,8 +108,8 @@ export default function GameBoard() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center  bg-gray-950 text-white mt-4 rounded-lg">
-      <div className="flex items-center justify-between w-full  px-4 mb-8 mt-4">
+    <div className="flex flex-col items-center justify-center bg-gray-950 text-white mt-4 rounded-lg">
+      <div className="flex items-center justify-between w-full max-w-lg px-4 mb-8 mt-4">
         <h2 className="text-2xl font-bold font-mono neon-text">
           Score: {score}
         </h2>
@@ -114,21 +120,41 @@ export default function GameBoard() {
           {gameOver || speed === null ? "Start" : "Restart"}
         </button>
       </div>
-      <div className="mt-4 flex items-center space-x-2">
-        <label htmlFor="snake-color" className="text-lg font-mono neon-text">
-          Snake Color:
-        </label>
-        <input
-          type="color"
-          id="snake-color"
-          value={selectedColor}
-          onChange={(e) => setSelectedColor(e.target.value)}
-          className="w-12 h-12 rounded-full cursor-pointer border-none"
-        />
+
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="flex items-center space-x-2">
+          <label htmlFor="snake-color" className="text-lg font-mono neon-text">
+            Snake Color:
+          </label>
+          <input
+            type="color"
+            id="snake-color"
+            value={selectedColor}
+            onChange={(e) => setSelectedColor(e.target.value)}
+            className="w-10 h-10 rounded-full cursor-pointer border-none"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <label htmlFor="board-theme" className="text-lg font-mono neon-text">
+            Theme:
+          </label>
+          <select
+            id="board-theme"
+            value={currentTheme}
+            onChange={(e) => setCurrentTheme(e.target.value)}
+            className="bg-gray-800 text-white rounded-md p-2"
+          >
+            {Object.keys(themes).map((themeName) => (
+              <option key={themeName} value={themeName}>
+                {themeName.charAt(0).toUpperCase() + themeName.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div
-        className="relative board-theme"
+        className={`relative board-theme ${themes[currentTheme]}`}
         style={{
           width: `${boardSize * gridSize}px`,
           height: `${boardSize * gridSize}px`,
