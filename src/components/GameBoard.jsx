@@ -16,6 +16,8 @@ export default function GameBoard() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
 
+  const [selectedColor, setSelectedColor] = useState("#a3e635");
+
   function getRandomFood() {
     return {
       x: Math.floor(Math.random() * boardSize),
@@ -112,6 +114,18 @@ export default function GameBoard() {
           {gameOver || speed === null ? "Start" : "Restart"}
         </button>
       </div>
+      <div className="mt-4 flex items-center space-x-2">
+        <label htmlFor="snake-color" className="text-lg font-mono neon-text">
+          Snake Color:
+        </label>
+        <input
+          type="color"
+          id="snake-color"
+          value={selectedColor}
+          onChange={(e) => setSelectedColor(e.target.value)}
+          className="w-12 h-12 rounded-full cursor-pointer border-none"
+        />
+      </div>
 
       <div
         className="relative board-theme"
@@ -120,7 +134,11 @@ export default function GameBoard() {
           height: `${boardSize * gridSize}px`,
         }}
       >
-        <Snake snakeDots={snake} direction={direction} />
+        <Snake
+          snakeDots={snake}
+          direction={direction}
+          snakeColor={selectedColor}
+        />
         <Food position={food} />
       </div>
 
