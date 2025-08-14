@@ -1,67 +1,109 @@
 import { useState, useEffect, useRef } from "react";
 import Snake from "./Snake";
-import Food from "./Food";
+import Food, { FOOD_TYPES } from "./Food";
 import { useInterval } from "../hooks/useInterval";
+
+// We'll define the themes here for simplicity.
+const themes = {
+  default: "board-theme-default",
+  garden: "board-theme-garden",
+  road: "board-theme-road",
+  space: "board-theme-space",
+  cyberpunk: "board-theme-cyberpunk",
+};
 
 export default function GameBoard() {
   const boardSize = 20;
   const gridSize = 20;
   const initialSnake = [{ x: 8, y: 8 }];
-  const initialSpeed = 150;
 
   const [snake, setSnake] = useState(initialSnake);
-  const [food, setFood] = useState(() => getRandomFood(initialSnake));
+  const [food, setFood] = useState(getRandomFood(initialSnake));
+  const [foodType, setFoodType] = useState(FOOD_TYPES.NORMAL);
   const [direction, setDirection] = useState("RIGHT");
   const [speed, setSpeed] = useState(null);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [countdown, setCountdown] = useState(null);
 
-  // Refs for snake and timers
-  const snakeRef = useRef(snake);
-  const foodTimerRef = useRef(null);
-  const remainingTimeRef = useRef(null);
-  const foodSpawnTimeRef = useRef(null);
+  const [selectedColor, setSelectedColor] = useState("#a3e635");
+  const [currentTheme, setCurrentTheme] = useState("default");
 
-  useEffect(() => {
-    snakeRef.current = snake;
-  }, [snake]);
+  // Track remaining time for special food (ms)
+  const [specialTimeLeft, setSpecialTimeLeft] = useState(null);
 
-  // Board & wall colors
-  const boardShades = [
-    "#9ca3af", "#6b7280", "#4b5563", "#374151",
-    "#3b82f6", "#10b981", "#8b5cf6", "#ec4899"
-  ];
-  const [boardColor] = useState(
-    boardShades[Math.floor(Math.random() * boardShades.length)]
-  );
+  // Timer refs
+  const specialTimerRef = useRef(null);
+  const specialIntervalRef = useRef(null);
 
-  // Generate wall cells & random colors
-  const wallCells = [];
-  for (let i = 0; i < boardSize; i++) {
-    wallCells.push({ x: i, y: 0 });
-    wallCells.push({ x: i, y: boardSize - 1 });
-    wallCells.push({ x: 0, y: i });
-    wallCells.push({ x: boardSize - 1, y: i });
-  }
-  const wallShades = wallCells.map(() => {
-    const shades = boardShades.filter(c => c !== boardColor);
-    return shades[Math.floor(Math.random() * shades.length)];
-  });
-
+  // --- Helpers ---
   function getRandomFood(snakeBody) {
-    const foodTypes = ["normal", "bonus", "poison"];
-    const randomType = foodTypes[Math.floor(Math.random() * foodTypes.length)];
-    let newFood;
-    do {
-      newFood = {
-        x: Math.floor(Math.random() * (boardSize - 2)) + 1,
-        y: Math.floor(Math.random() * (boardSize - 2)) + 1,
-        type: randomType,
+    while (true) {
+      const pos = {
+        x: Math.floor(Math.random() * boardSize),
+        y: Math.floor(Math.random() * boardSize),
       };
-    } while (snakeBody.some(dot => dot.x === newFood.x && dot.y === newFood.y));
-    return newFood;
+      const onSnake = snakeBody?.some((s) => s.x === pos.x && s.y === pos.y);
+      if (!onSnake) return pos;
+    }
+  }
+
+  function clearSpecialTimer() {
+    if (specialTimerRef.current) {
+      clearTimeout(specialTimerRef.current);
+      specialTimerRef.current = null;
+    }
+    if (specialIntervalRef.current) {
+      clearInterval(specialIntervalRef.current);
+      specialIntervalRef.current = null;
+    }
+    setSpecialTimeLeft(null);
+  }
+
+  function startSpecialExpiryTimer(expiredType) {
+    clearSpecialTimer();
+    setSpecialTimeLeft(5000); // 5 seconds total
+
+    // Countdown updater (100ms steps so blink can trigger at <= 800ms)
+    specialIntervalRef.current = setInterval(() => {
+      setSpecialTimeLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 100) return 0;
+        return prev - 100;
+      });
+    }, 100);
+
+    // Expiry action
+    specialTimerRef.current = setTimeout(() => {
+      const nextType = pickNextTypeDifferentFrom(expiredType);
+      spawnFood(nextType);
+    }, 5000);
+  }
+
+  // 70% normal, 15% bonus, 15% bomb
+  function pickWeightedType() {
+    const r = Math.random();
+    if (r < 0.7) return FOOD_TYPES.NORMAL;
+    if (r < 0.85) return FOOD_TYPES.BONUS;
+    return FOOD_TYPES.BOMB;
+  }
+
+  function pickNextTypeDifferentFrom(prevType) {
+    if (prevType === FOOD_TYPES.BONUS || prevType === FOOD_TYPES.BOMB) {
+      return FOOD_TYPES.NORMAL;
+    }
+    return pickWeightedType();
+  }
+
+  function spawnFood(type = FOOD_TYPES.NORMAL, nextSnake = snake) {
+    const nextPos = getRandomFood(nextSnake);
+    setFood(nextPos);
+    setFoodType(type);
+
+    if (type === FOOD_TYPES.BONUS || type === FOOD_TYPES.BOMB) {
+      startSpecialExpiryTimer(type);
+    } else {
+      clearSpecialTimer();
+    }
   }
 
   function moveSnake() {
@@ -74,12 +116,7 @@ export default function GameBoard() {
     if (direction === "RIGHT") head.x += 1;
 
     // Wall collision
-    if (
-      head.x === 0 ||
-      head.y === 0 ||
-      head.x === boardSize - 1 ||
-      head.y === boardSize - 1
-    ) {
+    if (head.x < 0 || head.y < 0 || head.x >= boardSize || head.y >= boardSize) {
       endGame();
       return;
     }
@@ -87,25 +124,45 @@ export default function GameBoard() {
     newSnake.unshift(head);
 
     // Self collision
-    if (newSnake.slice(1).some(dot => dot.x === head.x && dot.y === head.y)) {
-      endGame();
-      return;
+    for (let i = 1; i < newSnake.length; i++) {
+      if (newSnake[i].x === head.x && newSnake[i].y === head.y) {
+        endGame();
+        return;
+      }
     }
 
-    // Eat food
-    if (head.x === food.x && head.y === food.y) {
-      if (food.type === "normal") {
-        setScore(prev => prev + 1);
-        setSpeed(prev => Math.max(50, prev - 10));
-      } else if (food.type === "bonus") {
-        setScore(prev => prev + 5);
-        setSpeed(prev => Math.max(50, prev - 20));
-      } else if (food.type === "poison") {
-        setScore(prev => Math.floor(prev / 2));
-        setSnake(prev => prev.slice(0, Math.ceil(prev.length / 2)));
+    const ateFood = head.x === food.x && head.y === food.y;
+
+    if (ateFood) {
+      // Scoring rules
+      if (foodType === FOOD_TYPES.NORMAL) {
+        setScore((prev) => prev + 1);
+      } else if (foodType === FOOD_TYPES.BONUS) {
+        setScore((prev) => prev + 5);
+      } else if (foodType === FOOD_TYPES.BOMB) {
+        setScore((prev) => Math.floor(prev / 2));
       }
-      setFood(getRandomFood(newSnake));
+
+      // Speed up only for positive foods
+      if (foodType !== FOOD_TYPES.BOMB) {
+        setSpeed((prevSpeed) => {
+          if (prevSpeed && prevSpeed > 50) return prevSpeed - 5;
+          if (prevSpeed === null) return 150; // in case Move runs before start
+          return prevSpeed;
+        });
+      }
+
+      // Bomb shouldn't grow snake (remove tail once)
+      if (foodType === FOOD_TYPES.BOMB) {
+        newSnake.pop();
+      }
+
+      // Spawn the next food (weighted)
+      clearSpecialTimer();
+      const nextType = pickWeightedType();
+      spawnFood(nextType, newSnake);
     } else {
+      // Normal move: remove tail
       newSnake.pop();
     }
 
@@ -115,179 +172,113 @@ export default function GameBoard() {
   function endGame() {
     setGameOver(true);
     setSpeed(null);
-    setPaused(false);
-    clearTimeout(foodTimerRef.current);
+    clearSpecialTimer();
   }
 
   useInterval(moveSnake, speed);
 
-  // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === " ") {
-        e.preventDefault();
-        if (gameOver) {
-          startNewGame();
-        } else if (speed) {
-          setPaused(true);
-          setSpeed(null);
-        } else if (paused) {
-          startCountdown();
-        }
-      }
-
-      const startIfStopped = () => {
-        if (!speed && !gameOver && !paused) startCountdown();
-      };
-
-      if (e.key === "ArrowUp" && direction !== "DOWN") {
-        setDirection("UP");
-        startIfStopped();
-      }
-      if (e.key === "ArrowDown" && direction !== "UP") {
-        setDirection("DOWN");
-        startIfStopped();
-      }
-      if (e.key === "ArrowLeft" && direction !== "RIGHT") {
-        setDirection("LEFT");
-        startIfStopped();
-      }
-      if (e.key === "ArrowRight" && direction !== "LEFT") {
-        setDirection("RIGHT");
-        startIfStopped();
-      }
+      if (e.key === "ArrowUp" && direction !== "DOWN") setDirection("UP");
+      if (e.key === "ArrowDown" && direction !== "UP") setDirection("DOWN");
+      if (e.key === "ArrowLeft" && direction !== "RIGHT") setDirection("LEFT");
+      if (e.key === "ArrowRight" && direction !== "LEFT") setDirection("RIGHT");
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [direction, speed, gameOver, paused]);
+  }, [direction]);
 
-  // Pause-aware auto-despawn for bonus & poison
   useEffect(() => {
-    clearTimeout(foodTimerRef.current);
-
-    if (food.type === "bonus" || food.type === "poison") {
-      const timeout = food.type === "poison" ? 3000 : 5000;
-      remainingTimeRef.current = timeout;
-      foodSpawnTimeRef.current = Date.now();
-
-      if (!paused) {
-        foodTimerRef.current = setTimeout(() => {
-          setFood(getRandomFood(snakeRef.current));
-        }, timeout);
-      }
-    }
-  }, [food]);
-
-  // Handle pause/resume for food timers
-  useEffect(() => {
-    if (paused) {
-      if (remainingTimeRef.current != null && foodSpawnTimeRef.current != null) {
-        const elapsed = Date.now() - foodSpawnTimeRef.current;
-        remainingTimeRef.current = Math.max(0, remainingTimeRef.current - elapsed);
-        clearTimeout(foodTimerRef.current);
-      }
-    } else {
-      if (
-        remainingTimeRef.current != null &&
-        remainingTimeRef.current > 0 &&
-        (food.type === "bonus" || food.type === "poison")
-      ) {
-        foodSpawnTimeRef.current = Date.now();
-        foodTimerRef.current = setTimeout(() => {
-          setFood(getRandomFood(snakeRef.current));
-        }, remainingTimeRef.current);
-      }
-    }
-  }, [paused]);
+    // Cleanup timers on unmount
+    return () => clearSpecialTimer();
+  }, []);
 
   function startNewGame() {
-    setSnake(initialSnake);
-    setFood(getRandomFood(initialSnake));
+    clearSpecialTimer();
+    const freshSnake = initialSnake;
+    setSnake(freshSnake);
     setDirection("RIGHT");
-    setScore(0);
+    setSpeed(150);
     setGameOver(false);
-    setPaused(false);
-    startCountdown();
+    setScore(0);
+    // Start with normal food (pulsating)
+    spawnFood(FOOD_TYPES.NORMAL, freshSnake);
   }
 
-  function startCountdown() {
-    setPaused(false);
-    let counter = 3;
-    setCountdown(counter);
-    const timer = setInterval(() => {
-      counter--;
-      if (counter === 0) {
-        setCountdown("Go!");
-        setTimeout(() => {
-          setCountdown(null);
-          setSpeed(initialSpeed);
-        }, 500);
-        clearInterval(timer);
-      } else {
-        setCountdown(counter);
-      }
-    }, 1000);
-  }
+  // Blink the last 0.8s of a special
+  const shouldBlink =
+    (foodType === FOOD_TYPES.BONUS || foodType === FOOD_TYPES.BOMB) &&
+    specialTimeLeft !== null &&
+    specialTimeLeft <= 800;
+
+  // Theme backplate + optional blink class
+  const foodClass = `food-${currentTheme} ${shouldBlink ? "food-blink" : ""}`;
 
   return (
-    <div className="flex flex-col items-center justify-center mt-10">
-      <div className="flex items-center justify-between w-full max-w-md px-4">
-        <h2 className="text-lg font-bold">Score: {score}</h2>
+    <div className="flex flex-col items-center justify-center bg-gray-950 text-white mt-4 rounded-lg">
+      <div className="flex items-center justify-between w-full max-w-lg px-4 mb-8 mt-4">
+        <h2 className="text-2xl font-bold font-mono neon-text">
+          Score: {score}
+        </h2>
         <button
           onClick={startNewGame}
-          className="bg-blue-500 hover:bg-blue-600 px-4 py-1 rounded text-white"
+          className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg text-white font-mono uppercase transition-all duration-300 transform hover:scale-105 shadow-lg active:scale-95"
         >
           {gameOver || speed === null ? "Start" : "Restart"}
         </button>
       </div>
 
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="flex items-center space-x-2">
+          <label htmlFor="snake-color" className="text-lg font-mono neon-text">
+            Snake Color:
+          </label>
+          <input
+            type="color"
+            id="snake-color"
+            value={selectedColor}
+            onChange={(e) => setSelectedColor(e.target.value)}
+            className="w-10 h-10 rounded-full cursor-pointer border-none"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <label htmlFor="board-theme" className="text-lg font-mono neon-text">
+            Theme:
+          </label>
+          <select
+            id="board-theme"
+            value={currentTheme}
+            onChange={(e) => setCurrentTheme(e.target.value)}
+            className="bg-gray-800 text-white rounded-md p-2"
+          >
+            {Object.keys(themes).map((themeName) => (
+              <option key={themeName} value={themeName}>
+                {themeName.charAt(0).toUpperCase() + themeName.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div
-        className="relative mt-4 flex items-center justify-center"
+        className={`relative board-theme ${themes[currentTheme]}`}
         style={{
-          backgroundColor: boardColor,
           width: `${boardSize * gridSize}px`,
           height: `${boardSize * gridSize}px`,
         }}
       >
-        {/* Pause overlay */}
-        {paused && !gameOver && !countdown && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-               style={{ backgroundColor: "rgba(0,0,0,0.35)" }}>
-            <span className="text-white text-3xl font-bold">Paused</span>
-          </div>
-        )}
-
-        {/* Countdown overlay */}
-        {countdown && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-               style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-            <span className="text-white text-4xl font-bold">{countdown}</span>
-          </div>
-        )}
-
-        {/* Walls */}
-        {wallCells.map((cell, idx) => (
-          <div
-            key={`wall-${cell.x}-${cell.y}`}
-            style={{
-              position: "absolute",
-              left: `${cell.x * gridSize}px`,
-              top: `${cell.y * gridSize}px`,
-              width: `${gridSize}px`,
-              height: `${gridSize}px`,
-              backgroundColor: wallShades[idx],
-            }}
-          ></div>
-        ))}
-
-        {/* Snake & Food */}
-        <Snake snakeDots={snake} direction={direction} prefix="snake" />
-        <Food position={food} type={food.type} prefix="food" />
+        <Snake
+          snakeDots={snake}
+          direction={direction}
+          snakeColor={selectedColor}
+        />
+        <Food position={food} type={foodType} extraClass={foodClass} />
       </div>
 
       {gameOver && (
-        <div className="mt-4 text-red-500 text-xl font-bold">Game Over!</div>
+        <div className="mt-4 text-red-500 text-4xl font-bold neon-text-red">
+          Game Over!
+        </div>
       )}
     </div>
   );

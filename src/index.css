@@ -1,6 +1,58 @@
 @import "tailwindcss";
 
 /* You can add this at the end of your index.css file */
+/* Add this to your CSS file */
+body {
+  font-family: "Courier New", Courier, monospace;
+}
+
+.board-theme {
+  border: 4px solid #4a044e; /* Deep purple border */
+  border-radius: 10px;
+  box-shadow: 0 0 25px 5px rgba(100, 21, 255, 0.5),
+    0 0 40px 10px rgba(139, 92, 246, 0.3);
+  background: radial-gradient(circle, #1a1a2e 0%, #000 100%);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Add an active state for a dynamic effect */
+.board-theme:hover {
+  box-shadow: 0 0 35px 10px rgba(100, 21, 255, 0.7),
+    0 0 50px 20px rgba(139, 92, 246, 0.5);
+}
+
+/* Neon Text for Score and Start Button */
+.neon-text {
+  text-shadow: 0 0 5px #a855f7, 0 0 10px #a855f7, 0 0 15px #c084fc;
+  color: #fff;
+}
+
+/* Red Neon for Game Over */
+.neon-text-red {
+  text-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444, 0 0 15px #f87171;
+  color: #fff;
+  animation: flicker 1.5s infinite alternate;
+}
+
+/* Optional: a subtle flicker animation */
+@keyframes flicker {
+  0%,
+  18%,
+  22%,
+  25%,
+  53%,
+  57%,
+  100% {
+    text-shadow: 0 0 4px #ef4444, 0 0 11px #ef4444, 0 0 19px #f87171,
+      0 0 40px #f87171, 0 0 80px #f87171, 0 0 90px #f87171, 0 0 100px #f87171,
+      0 0 150px #f87171;
+  }
+  20%,
+  24%,
+  55% {
+    text-shadow: none;
+  }
+}
 
 .food-pulsate {
   animation: pulsate 1.5s ease-in-out infinite alternate;
@@ -28,3 +80,115 @@
     opacity: 1;
   }
 }
+
+/* --- All your existing CSS here, including .board-theme --- */
+
+/* Base style for all themes */
+.board-theme {
+  border: 4px solid #4a044e; /* Default border color */
+  border-radius: 10px;
+  box-shadow: 0 0 25px 5px rgba(100, 21, 255, 0.5),
+    0 0 40px 10px rgba(139, 92, 246, 0.3);
+  transition: all 0.5s ease-in-out;
+}
+
+/* Default Theme (unchanged) */
+.board-theme-default {
+  background: radial-gradient(circle, #1a1a2e 0%, #000 100%);
+}
+
+/* Garden Theme 🌳 */
+.board-theme-garden {
+  background-color: #38a169; /* a rich green */
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.1) 2px,
+    transparent 2px,
+    transparent 10px
+  );
+  box-shadow: 0 0 25px 5px rgba(56, 161, 105, 0.5),
+    0 0 40px 10px rgba(56, 161, 105, 0.3);
+}
+
+/* Road Theme 🛣️ */
+.board-theme-road {
+  background-color: #2d3748; /* dark gray */
+  background-image: linear-gradient(
+      to right,
+      transparent 45%,
+      #f7fafc 45%,
+      #f7fafc 55%,
+      transparent 55%
+    ),
+    linear-gradient(#4a5568 1px, transparent 1px);
+  background-size: 100% 20px, 100% 20px;
+  box-shadow: 0 0 25px 5px rgba(45, 55, 72, 0.5),
+    0 0 40px 10px rgba(45, 55, 72, 0.3);
+}
+
+/* Space Theme 🚀 */
+.board-theme-space {
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+  box-shadow: 0 0 25px 5px rgba(255, 255, 255, 0.2),
+    0 0 40px 10px rgba(255, 255, 255, 0.1);
+  background-image: radial-gradient(
+      2px 2px at 20px 30px,
+      #eee,
+      rgba(255, 255, 255, 0)
+    ),
+    radial-gradient(2px 2px at 40px 70px, #fff, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 50px 160px, #ddd, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 90px 40px, #fff, rgba(255, 255, 255, 0)),
+    radial-gradient(2px 2px at 130px 50px, #fff, rgba(255, 255, 255, 0));
+  background-size: 150px 150px;
+}
+
+/* Cyberpunk Theme 🤖 */
+.board-theme-cyberpunk {
+  background-color: #0b0c10;
+  background-image: linear-gradient(
+      0deg,
+      transparent 24%,
+      rgba(32, 222, 255, 0.1) 25%,
+      rgba(32, 222, 255, 0.1) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(32, 222, 255, 0.1) 75%,
+      rgba(32, 222, 255, 0.1) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      rgba(32, 222, 255, 0.1) 25%,
+      rgba(32, 222, 255, 0.1) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(32, 222, 255, 0.1) 75%,
+      rgba(32, 222, 255, 0.1) 76%,
+      transparent 77%,
+      transparent
+    );
+  background-size: 50px 50px;
+  box-shadow: 0 0 25px 5px rgba(32, 222, 255, 0.5),
+    0 0 40px 10px rgba(255, 0, 255, 0.3);
+  border-color: #20deff;
+}
+
+/* Blink animation for last moment warning */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.2; }
+}
+
+.food-blink {
+  animation: blink 0.8s linear infinite;
+}
+
+/* Theme backplates to keep food readable on any board */
+.food-default { background-color: #ef4444; border: 2px solid #b91c1c; }
+.food-garden { background-color: #facc15; border: 2px solid #ca8a04; }
+.food-road { background-color: #22c55e; border: 2px solid #15803d; }
+.food-space { background-color: #ec4899; border: 2px solid #be185d; }
+.food-cyberpunk { background-color: #f97316; border: 2px solid #c2410c; }
