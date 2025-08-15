@@ -131,10 +131,36 @@ export default function GameBoard() {
       }
     }
 
-    // Eat food
-    if (head.x === food.x && head.y === food.y) {
-      setFood(getRandomFood());
-      setScore((prev) => prev + 1);
+    const ateFood = head.x === food.x && head.y === food.y;
+
+    if (ateFood) {
+      // Scoring rules
+      if (foodType === FOOD_TYPES.NORMAL) {
+        setScore((prev) => prev + 1);
+      } else if (foodType === FOOD_TYPES.BONUS) {
+        setScore((prev) => prev + 5);
+      } else if (foodType === FOOD_TYPES.BOMB) {
+        setScore((prev) => Math.floor(prev / 2));
+      }
+
+      // Speed up only for positive foods
+      if (foodType !== FOOD_TYPES.BOMB) {
+        setSpeed((prevSpeed) => {
+          if (prevSpeed && prevSpeed > 50) return prevSpeed - 5;
+          if (prevSpeed === null) return 150; // in case Move runs before start
+          return prevSpeed;
+        });
+      }
+
+      // Bomb shouldn't grow snake (remove tail once)
+      if (foodType === FOOD_TYPES.BOMB) {
+        newSnake.pop();
+      }
+
+      // Spawn the next food (weighted)
+      clearSpecialTimer();
+      const nextType = pickWeightedType();
+      spawnFood(nextType, newSnake);
     } else {
       // Normal move: remove tail
       newSnake.pop();
@@ -189,9 +215,11 @@ export default function GameBoard() {
   const foodClass = `food-${currentTheme} ${shouldBlink ? "food-blink" : ""}`;
 
   return (
-    <div className="flex flex-col items-center justify-center mt-10">
-      <div className="flex items-center justify-between w-full max-w-md px-4">
-        <h2 className="text-lg font-bold">Score: {score}</h2>
+    <div className="flex flex-col items-center justify-center bg-gray-950 text-white mt-4 rounded-lg">
+      <div className="flex items-center justify-between w-full max-w-lg px-4 mb-8 mt-4">
+        <h2 className="text-2xl font-bold font-mono neon-text">
+          Score: {score}
+        </h2>
         <button
           onClick={startNewGame}
           className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg text-white font-mono uppercase transition-all duration-300 transform hover:scale-105 shadow-lg active:scale-95"
@@ -200,8 +228,40 @@ export default function GameBoard() {
         </button>
       </div>
 
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="flex items-center space-x-2">
+          <label htmlFor="snake-color" className="text-lg font-mono neon-text">
+            Snake Color:
+          </label>
+          <input
+            type="color"
+            id="snake-color"
+            value={selectedColor}
+            onChange={(e) => setSelectedColor(e.target.value)}
+            className="w-10 h-10 rounded-full cursor-pointer border-none"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <label htmlFor="board-theme" className="text-lg font-mono neon-text">
+            Theme:
+          </label>
+          <select
+            id="board-theme"
+            value={currentTheme}
+            onChange={(e) => setCurrentTheme(e.target.value)}
+            className="bg-gray-800 text-white rounded-md p-2"
+          >
+            {Object.keys(themes).map((themeName) => (
+              <option key={themeName} value={themeName}>
+                {themeName.charAt(0).toUpperCase() + themeName.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div
-        className="relative border-4 border-gray-700 bg-black mt-4"
+        className={`relative board-theme ${themes[currentTheme]}`}
         style={{
           width: `${boardSize * gridSize}px`,
           height: `${boardSize * gridSize}px`,
