@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-/* You can add this at the end of your index.css file */
-/* Add this to your CSS file */
 body {
   font-family: "Courier New", Courier, monospace;
 }
@@ -178,8 +176,15 @@ body {
 
 /* Blink animation for last moment warning */
 @keyframes blink {
-  0%, 50%, 100% { opacity: 1; }
-  25%, 75% { opacity: 0.2; }
+  0%,
+  50%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0.2;
+  }
 }
 
 .food-blink {
@@ -187,8 +192,23 @@ body {
 }
 
 /* Theme backplates to keep food readable on any board */
-.food-default { background-color: #ef4444; border: 2px solid #b91c1c; }
-.food-garden { background-color: #facc15; border: 2px solid #ca8a04; }
-.food-road { background-color: #22c55e; border: 2px solid #15803d; }
-.food-space { background-color: #ec4899; border: 2px solid #be185d; }
-.food-cyberpunk { background-color: #f97316; border: 2px solid #c2410c; }
+.food-default {
+  background-color: #ef4444;
+  border: 2px solid #b91c1c;
+}
+.food-garden {
+  background-color: #facc15;
+  border: 2px solid #ca8a04;
+}
+.food-road {
+  background-color: #22c55e;
+  border: 2px solid #15803d;
+}
+.food-space {
+  background-color: #ec4899;
+  border: 2px solid #be185d;
+}
+.food-cyberpunk {
+  background-color: #f97316;
+  border: 2px solid #c2410c;
+}

@@ -144,7 +144,12 @@ export default function GameBoard() {
     if (direction === "RIGHT") head.x += 1;
 
     // Wall collision
-    if (head.x < 0 || head.y < 0 || head.x >= boardSize || head.y >= boardSize) {
+    if (
+      head.x < 0 ||
+      head.y < 0 ||
+      head.x >= boardSize ||
+      head.y >= boardSize
+    ) {
       endGame();
       return;
     }

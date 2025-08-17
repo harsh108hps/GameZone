@@ -21,8 +21,8 @@ const ICONS = {
  */
 const COLORS = {
   [FOOD_TYPES.NORMAL]: "#f97316", // orange-500
-  [FOOD_TYPES.BONUS]: "#ef4444",  // red-500
-  [FOOD_TYPES.BOMB]: "#0f172a",   // slate-900 (near-black)
+  [FOOD_TYPES.BONUS]: "#ef4444", // red-500
+  [FOOD_TYPES.BOMB]: "#0f172a", // slate-900 (near-black)
 };
 
 export default function Food({
@@ -35,7 +35,9 @@ export default function Food({
 
   return (
     <div
-      className={`absolute rounded-full flex items-center justify-center ${type === FOOD_TYPES.NORMAL ? "food-pulsate" : ""} ${extraClass}`}
+      className={`absolute rounded-full flex items-center justify-center ${
+        type === FOOD_TYPES.NORMAL ? "food-pulsate" : ""
+      } ${extraClass}`}
       style={{
         left: `${position.x * gridSize}px`,
         top: `${position.y * gridSize}px`,
