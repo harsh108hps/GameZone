@@ -15,10 +15,18 @@ const themes = {
 // Levels hurdles (instead of speed)
 const levelHurdles = {
   1: [], // no obstacles
-  2: [{ x: 10, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 12 }],
+  2: [
+    { x: 10, y: 10 },
+    { x: 10, y: 11 },
+    { x: 10, y: 12 },
+  ],
   3: [
-    { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 },
-    { x: 12, y: 15 }, { x: 13, y: 15 }, { x: 14, y: 15 }
+    { x: 5, y: 5 },
+    { x: 6, y: 5 },
+    { x: 7, y: 5 },
+    { x: 12, y: 15 },
+    { x: 13, y: 15 },
+    { x: 14, y: 15 },
   ],
   4: [
     ...Array.from({ length: 8 }, (_, i) => ({ x: i + 6, y: 10 })),
@@ -44,7 +52,9 @@ export default function GameBoard() {
 
   const [snake, setSnake] = useState(initialSnake);
   const [hurdles, setHurdles] = useState(levelHurdles[1]);
-  const [food, setFood] = useState(getRandomFood(initialSnake, levelHurdles[1]));
+  const [food, setFood] = useState(
+    getRandomFood(initialSnake, levelHurdles[1])
+  );
   const [foodType, setFoodType] = useState(FOOD_TYPES.NORMAL);
   const [direction, setDirection] = useState("RIGHT");
   const [speed, setSpeed] = useState(null);
