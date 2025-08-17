@@ -1,5 +1,7 @@
 import { GiShinyApple, GiRollingBomb } from "react-icons/gi";
 import { PiOrangeFill } from "react-icons/pi";
+import { IoDiamondSharp } from "react-icons/io5";
+
 
 export const FOOD_TYPES = {
   NORMAL: "normal",
@@ -9,7 +11,7 @@ export const FOOD_TYPES = {
 
 const ICONS = {
   [FOOD_TYPES.NORMAL]: PiOrangeFill,
-  [FOOD_TYPES.BONUS]: GiShinyApple,
+  [FOOD_TYPES.BONUS]: IoDiamondSharp,
   [FOOD_TYPES.BOMB]: GiRollingBomb,
 };
 

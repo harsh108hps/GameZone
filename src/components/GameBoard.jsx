@@ -12,13 +12,39 @@ const themes = {
   cyberpunk: "board-theme-cyberpunk",
 };
 
+// Levels hurdles (instead of speed)
+const levelHurdles = {
+  1: [], // no obstacles
+  2: [{ x: 10, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 12 }],
+  3: [
+    { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 },
+    { x: 12, y: 15 }, { x: 13, y: 15 }, { x: 14, y: 15 }
+  ],
+  4: [
+    ...Array.from({ length: 8 }, (_, i) => ({ x: i + 6, y: 10 })),
+    ...Array.from({ length: 8 }, (_, i) => ({ x: 10, y: i + 6 })),
+  ],
+  5: [
+    // Horizontal line with gaps at x=5 and x=15
+    ...Array.from({ length: 20 }, (_, i) =>
+      i === 5 || i === 15 ? null : { x: i, y: 10 }
+    ).filter(Boolean),
+
+    // Vertical line with gaps at y=5 and y=15
+    ...Array.from({ length: 20 }, (_, i) =>
+      i === 5 || i === 15 ? null : { x: 10, y: i }
+    ).filter(Boolean),
+  ],
+};
+
 export default function GameBoard() {
   const boardSize = 20;
   const gridSize = 20;
-  const initialSnake = [{ x: 8, y: 8 }];
+  const initialSnake = [{ x: 0, y: 0 }]; // ⬅️ snake starts at top-left corner
 
   const [snake, setSnake] = useState(initialSnake);
-  const [food, setFood] = useState(getRandomFood(initialSnake));
+  const [hurdles, setHurdles] = useState(levelHurdles[1]);
+  const [food, setFood] = useState(getRandomFood(initialSnake, levelHurdles[1]));
   const [foodType, setFoodType] = useState(FOOD_TYPES.NORMAL);
   const [direction, setDirection] = useState("RIGHT");
   const [speed, setSpeed] = useState(null);
@@ -27,6 +53,7 @@ export default function GameBoard() {
 
   const [selectedColor, setSelectedColor] = useState("#a3e635");
   const [currentTheme, setCurrentTheme] = useState("default");
+  const [currentLevel, setCurrentLevel] = useState(1);
 
   // Track remaining time for special food (ms)
   const [specialTimeLeft, setSpecialTimeLeft] = useState(null);
@@ -36,14 +63,15 @@ export default function GameBoard() {
   const specialIntervalRef = useRef(null);
 
   // --- Helpers ---
-  function getRandomFood(snakeBody) {
+  function getRandomFood(snakeBody, hurdlesList) {
     while (true) {
       const pos = {
         x: Math.floor(Math.random() * boardSize),
         y: Math.floor(Math.random() * boardSize),
       };
       const onSnake = snakeBody?.some((s) => s.x === pos.x && s.y === pos.y);
-      if (!onSnake) return pos;
+      const onHurdle = hurdlesList?.some((h) => h.x === pos.x && h.y === pos.y);
+      if (!onSnake && !onHurdle) return pos;
     }
   }
 
@@ -63,7 +91,7 @@ export default function GameBoard() {
     clearSpecialTimer();
     setSpecialTimeLeft(5000); // 5 seconds total
 
-    // Countdown updater (100ms steps so blink can trigger at <= 800ms)
+    // Countdown updater
     specialIntervalRef.current = setInterval(() => {
       setSpecialTimeLeft((prev) => {
         if (prev === null) return null;
@@ -95,7 +123,7 @@ export default function GameBoard() {
   }
 
   function spawnFood(type = FOOD_TYPES.NORMAL, nextSnake = snake) {
-    const nextPos = getRandomFood(nextSnake);
+    const nextPos = getRandomFood(nextSnake, hurdles);
     setFood(nextPos);
     setFoodType(type);
 
@@ -117,6 +145,12 @@ export default function GameBoard() {
 
     // Wall collision
     if (head.x < 0 || head.y < 0 || head.x >= boardSize || head.y >= boardSize) {
+      endGame();
+      return;
+    }
+
+    // Hurdle collision
+    if (hurdles.some((h) => h.x === head.x && h.y === head.y)) {
       endGame();
       return;
     }
@@ -143,26 +177,24 @@ export default function GameBoard() {
         setScore((prev) => Math.floor(prev / 2));
       }
 
-      // Speed up only for positive foods
+      // Speed up
       if (foodType !== FOOD_TYPES.BOMB) {
         setSpeed((prevSpeed) => {
           if (prevSpeed && prevSpeed > 50) return prevSpeed - 5;
-          if (prevSpeed === null) return 150; // in case Move runs before start
+          if (prevSpeed === null) return 200; // base speed
           return prevSpeed;
         });
       }
 
-      // Bomb shouldn't grow snake (remove tail once)
+      // Bomb shouldn't grow snake
       if (foodType === FOOD_TYPES.BOMB) {
         newSnake.pop();
       }
 
-      // Spawn the next food (weighted)
       clearSpecialTimer();
       const nextType = pickWeightedType();
       spawnFood(nextType, newSnake);
     } else {
-      // Normal move: remove tail
       newSnake.pop();
     }
 
@@ -189,29 +221,30 @@ export default function GameBoard() {
   }, [direction]);
 
   useEffect(() => {
-    // Cleanup timers on unmount
+    setHurdles(levelHurdles[currentLevel]);
+  }, [currentLevel]);
+
+  useEffect(() => {
     return () => clearSpecialTimer();
   }, []);
 
   function startNewGame() {
     clearSpecialTimer();
-    const freshSnake = initialSnake;
+    const freshSnake = [{ x: 0, y: 0 }]; // ⬅️ reset to top-left
     setSnake(freshSnake);
     setDirection("RIGHT");
-    setSpeed(150);
+    setSpeed(200);
     setGameOver(false);
     setScore(0);
-    // Start with normal food (pulsating)
+    setHurdles(levelHurdles[currentLevel]);
     spawnFood(FOOD_TYPES.NORMAL, freshSnake);
   }
 
-  // Blink the last 0.8s of a special
   const shouldBlink =
     (foodType === FOOD_TYPES.BONUS || foodType === FOOD_TYPES.BOMB) &&
     specialTimeLeft !== null &&
     specialTimeLeft <= 800;
 
-  // Theme backplate + optional blink class
   const foodClass = `food-${currentTheme} ${shouldBlink ? "food-blink" : ""}`;
 
   return (
@@ -258,6 +291,23 @@ export default function GameBoard() {
             ))}
           </select>
         </div>
+        <div className="flex items-center space-x-2">
+          <label htmlFor="game-level" className="text-lg font-mono neon-text">
+            Level:
+          </label>
+          <select
+            id="game-level"
+            value={currentLevel}
+            onChange={(e) => setCurrentLevel(Number(e.target.value))}
+            className="bg-gray-800 text-white rounded-md p-2"
+          >
+            {Object.keys(levelHurdles).map((lvl) => (
+              <option key={lvl} value={lvl}>
+                Level {lvl}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div
@@ -267,12 +317,29 @@ export default function GameBoard() {
           height: `${boardSize * gridSize}px`,
         }}
       >
+        {/* Snake */}
         <Snake
           snakeDots={snake}
           direction={direction}
           snakeColor={selectedColor}
         />
+
+        {/* Food */}
         <Food position={food} type={foodType} extraClass={foodClass} />
+
+        {/* Hurdles */}
+        {hurdles.map((h, idx) => (
+          <div
+            key={idx}
+            className="absolute bg-gray-700 border border-gray-500 rounded"
+            style={{
+              left: h.x * gridSize,
+              top: h.y * gridSize,
+              width: gridSize,
+              height: gridSize,
+            }}
+          />
+        ))}
       </div>
 
       {gameOver && (
