@@ -439,7 +439,7 @@ export default function GameBoard() {
             {hurdles.map((h, idx) => (
               <div
                 key={idx}
-                className="absolute bg-gray-700 border border-gray-500 rounded"
+                className="absolute bg-purple-700 border border-purple-500 rounded"
                 style={{
                   left: h.x * gridSize,
                   top: h.y * gridSize,
