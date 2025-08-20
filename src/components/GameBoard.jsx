@@ -254,10 +254,8 @@ export default function GameBoard() {
       // Normal move: remove tail
       newSnake.pop();
     }
-
     setSnake(newSnake);
   }
-
   function endGame() {
     if (gameOverSoundRef.current) {
       gameOverSoundRef.current.currentTime = 0;
