@@ -53,7 +53,9 @@ export default function GameBoard() {
 
   const [snake, setSnake] = useState(initialSnake);
   const [hurdles, setHurdles] = useState(levelHurdles[1]);
-  const [food, setFood] = useState(getRandomFood(initialSnake, levelHurdles[1]));
+  const [food, setFood] = useState(
+    getRandomFood(initialSnake, levelHurdles[1])
+  );
   const [foodType, setFoodType] = useState(FOOD_TYPES.NORMAL);
   const [direction, setDirection] = useState("RIGHT");
   const [speed, setSpeed] = useState(null);
@@ -83,6 +85,39 @@ export default function GameBoard() {
   // Timer refs
   const specialTimerRef = useRef(null);
   const specialIntervalRef = useRef(null);
+
+  //music
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const audioRef = useRef(null);
+  const eatSoundRef = useRef(null);
+  const gameOverSoundRef = useRef(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio("/naagin.mp3");
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.3;
+
+    eatSoundRef.current = new Audio("/eat.mp3");
+
+    gameOverSoundRef.current = new Audio("/gameover.mp3");
+
+    return () => {
+      if (audioRef.current) audioRef.current.pause();
+      if (eatSoundRef.current) eatSoundRef.current.pause();
+      if (gameOverSoundRef.current) gameOverSoundRef.current.pause();
+    };
+  }, []);
+
+  const toggleMusic = () => {
+    if (!audioRef.current) return;
+    if (musicPlaying) {
+      audioRef.current.pause();
+      setMusicPlaying(false);
+    } else {
+      audioRef.current.play();
+      setMusicPlaying(true);
+    }
+  };
 
   // --- Helpers ---
   function getRandomFood(snakeBody, hurdlesList) {
@@ -166,7 +201,12 @@ export default function GameBoard() {
     if (direction === "RIGHT") head.x += 1;
 
     // Wall collision
-    if (head.x < 0 || head.y < 0 || head.x >= boardSize || head.y >= boardSize) {
+    if (
+      head.x < 0 ||
+      head.y < 0 ||
+      head.x >= boardSize ||
+      head.y >= boardSize
+    ) {
       endGame();
       return;
     }
@@ -191,11 +231,17 @@ export default function GameBoard() {
     const ateFood = head.x === food.x && head.y === food.y;
 
     if (ateFood) {
+      // 🔊 Play food-eaten sound
+      if (eatSoundRef.current) {
+        eatSoundRef.current.currentTime = 0; // rewind to start
+        eatSoundRef.current.play();
+      }
       // Update score based on food type
       setScore((prev) => {
         if (foodType === FOOD_TYPES.NORMAL) return prev + 1;
         if (foodType === FOOD_TYPES.BONUS) return prev + 5;
         if (foodType === FOOD_TYPES.BOMB) return Math.floor(prev / 2);
+
         return prev;
       });
 
@@ -213,6 +259,10 @@ export default function GameBoard() {
   }
 
   function endGame() {
+    if (gameOverSoundRef.current) {
+      gameOverSoundRef.current.currentTime = 0;
+      gameOverSoundRef.current.play();
+    }
     setGameOver(true);
     setSpeed(null);
     clearSpecialTimer();
@@ -244,21 +294,21 @@ export default function GameBoard() {
   useInterval(moveSnake, paused ? null : speed);
 
   useEffect(() => {
-  const handleKeyDown = (e) => {
-    if (e.key === "ArrowUp" && direction !== "DOWN") setDirection("UP");
-    if (e.key === "ArrowDown" && direction !== "UP") setDirection("DOWN");
-    if (e.key === "ArrowLeft" && direction !== "RIGHT") setDirection("LEFT");
-    if (e.key === "ArrowRight" && direction !== "LEFT") setDirection("RIGHT");
+    const handleKeyDown = (e) => {
+      if (e.key === "ArrowUp" && direction !== "DOWN") setDirection("UP");
+      if (e.key === "ArrowDown" && direction !== "UP") setDirection("DOWN");
+      if (e.key === "ArrowLeft" && direction !== "RIGHT") setDirection("LEFT");
+      if (e.key === "ArrowRight" && direction !== "LEFT") setDirection("RIGHT");
 
-    if (e.code === "Space") {
-      e.preventDefault(); // prevent page scroll
-      setPaused((prev) => !prev);
-    }
-  };
+      if (e.code === "Space") {
+        e.preventDefault(); // prevent page scroll
+        setPaused((prev) => !prev);
+      }
+    };
 
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, [direction, paused]); // ✅ include paused here
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [direction, paused]); // ✅ include paused here
 
   useEffect(() => {
     setHurdles(levelHurdles[currentLevel]);
@@ -273,7 +323,7 @@ export default function GameBoard() {
     const freshSnake = [{ x: 0, y: 0 }];
     setSnake(freshSnake);
     setDirection("RIGHT");
-    setPaused(false); 
+    setPaused(false);
     setSpeed(200);
     setGameOver(false);
     setScore(0);
@@ -313,7 +363,8 @@ export default function GameBoard() {
   }, [playerName, showNameModal]);
 
   useEffect(() => {
-    const savedLeaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    const savedLeaderboard =
+      JSON.parse(localStorage.getItem("leaderboard")) || [];
     const savedHighScore = parseInt(localStorage.getItem("highestScore")) || 0;
     setLeaderboard(savedLeaderboard);
     setHighestScore(savedHighScore);
@@ -369,12 +420,25 @@ export default function GameBoard() {
             >
               {gameOver || speed === null ? "Start" : "Restart"}
             </button>
+            <button
+              onClick={toggleMusic}
+              className={`ml-4 px-4 py-2 rounded-lg font-mono uppercase transition-all duration-300 ${
+                musicPlaying
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {musicPlaying ? "Pause Music" : "Play Music"}
+            </button>
           </div>
 
           {/* Controls */}
           <div className="flex items-center space-x-4 mb-4">
             <div className="flex items-center space-x-2">
-              <label htmlFor="snake-color" className="text-lg font-mono neon-text">
+              <label
+                htmlFor="snake-color"
+                className="text-lg font-mono neon-text"
+              >
                 Snake Color:
               </label>
               <input
@@ -386,7 +450,10 @@ export default function GameBoard() {
               />
             </div>
             <div className="flex items-center space-x-2">
-              <label htmlFor="board-theme" className="text-lg font-mono neon-text">
+              <label
+                htmlFor="board-theme"
+                className="text-lg font-mono neon-text"
+              >
                 Theme:
               </label>
               <select
@@ -403,7 +470,10 @@ export default function GameBoard() {
               </select>
             </div>
             <div className="flex items-center space-x-2">
-              <label htmlFor="game-level" className="text-lg font-mono neon-text">
+              <label
+                htmlFor="game-level"
+                className="text-lg font-mono neon-text"
+              >
                 Level:
               </label>
               <select
@@ -430,7 +500,11 @@ export default function GameBoard() {
             }}
           >
             {/* Snake */}
-            <Snake snakeDots={snake} direction={direction} snakeColor={selectedColor} />
+            <Snake
+              snakeDots={snake}
+              direction={direction}
+              snakeColor={selectedColor}
+            />
 
             {/* Food */}
             <Food position={food} type={foodType} extraClass={foodClass} />
@@ -450,10 +524,10 @@ export default function GameBoard() {
             ))}
           </div>
           {paused && !gameOver && (
-  <div className="mt-4 text-yellow-400 text-3xl font-bold neon-text">
-    ⏸ Paused
-  </div>
-)}
+            <div className="mt-4 text-yellow-400 text-3xl font-bold neon-text">
+              ⏸ Paused
+            </div>
+          )}
           {gameOver && (
             <div className="mt-4 text-red-500 text-4xl font-bold neon-text-red">
               Game Over!
@@ -472,7 +546,9 @@ export default function GameBoard() {
             onSubmit={handleNameSubmit}
             className="bg-gray-800 w-80 rounded-2xl p-6 shadow-xl"
           >
-            <h3 className="text-xl font-bold text-center mb-4">Enter your name</h3>
+            <h3 className="text-xl font-bold text-center mb-4">
+              Enter your name
+            </h3>
             <input
               autoFocus
               type="text"
